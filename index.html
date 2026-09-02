@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💞情侣点菜小工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, sans-serif;
+        }
+        body {
+            background-color: #fff7f7;
+            padding:20px;
+            max-width:750px;
+            margin:0 auto;
+        }
+        h1 {
+            text-align:center;
+            color:#d85a78;
+            margin-bottom:24px;
+            font-size:22px;
+        }
+        .category-block{
+            background:#ffffff;
+            border-radius:12px;
+            padding:16px;
+            margin-bottom:16px;
+            box-shadow: 0 2px 8px #00000012;
+        }
+        .category-title{
+            font-size:17px;
+            font-weight:bold;
+            color:#c24b68;
+            margin-bottom:12px;
+        }
+        .food-item{
+            display:inline-block;
+            padding:8px 14px;
+            background:#fce8ec;
+            border-radius:20px;
+            margin:6px;
+            cursor:pointer;
+            user-select:none;
+            transition:0.2s;
+        }
+        .food-item.active{
+            background:#d85a78;
+            color:white;
+        }
+        .btn-area{
+            text-align:center;
+            margin:24px 0;
+        }
+        button{
+            padding:10px 22px;
+            border:none;
+            border-radius:8px;
+            background:#d85a78;
+            color:white;
+            font-size:16px;
+            margin:0 8px;
+            cursor:pointer;
+        }
+        button#resetBtn{
+            background:#888888;
+        }
+        #resultWrap{
+            background:#fff;
+            padding:20px;
+            border-radius:12px;
+        }
+        #resultWrap h3{
+            text-align:center;
+            color:#d85a78;
+            margin-bottom:14px;
+        }
+        .result-section{
+            margin:10px 0;
+        }
+        .result-section h4{
+            color:#b0425c;
+            margin:6px 0;
+        }
+        .empty-tip{
+            color:#999;
+        }
+    </style>
+</head>
+<body>
+    <h1>💞情侣点菜工具</h1>
+
+    <!--肉类-->
+    <div class="category-block">
+        <div class="category-title">🥩肉类</div>
+        <div class="food-list">
+            <div class="food-item" data-type="meat" data-name="可乐鸡翅">可乐鸡翅</div>
+            <div class="food-item" data-type="meat" data-name="土豆炖牛腩">土豆炖牛腩</div>
+            <div class="food-item" data-type="meat" data-name="麻辣小龙虾">麻辣小龙虾</div>
+            <div class="food-item" data-type="meat" data-name="小炒黄牛肉">小炒黄牛肉</div>
+            <div class="food-item" data-type="meat" data-name="糖醋小排">糖醋小排</div>
+            <div class="food-item" data-type="meat" data-name="青椒肉丝">青椒肉丝</div>
+            <div class="food-item" data-type="meat" data-name="蒜苔炒肉">蒜苔炒肉</div>
+            <div class="food-item" data-type="meat" data-name="黄豆炖猪蹄">黄豆炖猪蹄</div>
+            <div class="food-item" data-type="meat" data-name="鹿茸菇炒肉">鹿茸菇炒肉</div>
+            <div class="food-item" data-type="meat" data-name="火爆双脆">火爆双脆</div>
+            <div class="food-item" data-type="meat" data-name="香辣牛蛙">香辣牛蛙</div>
+            <div class="food-item" data-type="meat" data-name="红烧牛排">红烧牛排</div>
+            <div class="food-item" data-type="meat" data-name="红烧肉">红烧肉</div>
+            <div class="food-item" data-type="meat" data-name="手撕鸡">手撕鸡</div>
+            <div class="food-item" data-type="meat" data-name="青椒炒猪耳朵">青椒炒猪耳朵</div>
+            <div class="food-item" data-type="meat" data-name="泡椒炒鸭肠">泡椒炒鸭肠</div>
+            <div class="food-item" data-type="meat" data-name="芹菜炒肉">芹菜炒肉</div>
+            <div class="food-item" data-type="meat" data-name="卤味拼盘">卤味拼盘</div>
+            <div class="food-item" data-type="meat" data-name="猪肉炖粉条">猪肉炖粉条</div>
+        </div>
+    </div>
+
+    <!--青菜-->
+    <div class="category-block">
+        <div class="category-title">🥬青菜</div>
+        <div class="food-list">
+            <div class="food-item" data-type="veg" data-name="炒油麦菜">炒油麦菜</div>
+            <div class="food-item" data-type="veg" data-name="蒜蓉上海青">蒜蓉上海青</div>
+            <div class="food-item" data-type="veg" data-name="炒空心菜">炒空心菜</div>
+            <div class="food-item" data-type="veg" data-name="西红柿炒豆腐">西红柿炒豆腐</div>
+            <div class="food-item" data-type="veg" data-name="酸辣土豆丝">酸辣土豆丝</div>
+            <div class="food-item" data-type="veg" data-name="虎皮青椒">虎皮青椒</div>
+            <div class="food-item" data-type="veg" data-name="小白菜">小白菜</div>
+            <div class="food-item" data-type="veg" data-name="清炒四季豆">清炒四季豆</div>
+            <div class="food-item" data-type="veg" data-name="蒜蓉娃娃菜">蒜蓉娃娃菜</div>
+            <div class="food-item" data-type="veg" data-name="油麦菜">油麦菜</div>
+            <div class="food-item" data-type="veg" data-name="清炒莴笋">清炒莴笋</div>
+            <div class="food-item" data-type="veg" data-name="酸辣包菜">酸辣包菜</div>
+            <div class="food-item" data-type="veg" data-name="红烧茄子">红烧茄子</div>
+            <div class="food-item" data-type="veg" data-name="炒花菜">炒花菜</div>
+            <div class="food-item" data-type="veg" data-name="蚝油蒜蓉生菜">蚝油蒜蓉生菜</div>
+        </div>
+    </div>
+
+    <!--海鲜-->
+    <div class="category-block">
+        <div class="category-title">🦞海鲜</div>
+        <div class="food-list">
+            <div class="food-item" data-type="sea" data-name="油焖大虾">油焖大虾</div>
+            <div class="food-item" data-type="sea" data-name="葱油鱿鱼">葱油鱿鱼</div>
+            <div class="food-item" data-type="sea" data-name="清蒸鲈鱼">清蒸鲈鱼</div>
+            <div class="food-item" data-type="sea" data-name="蒜蓉花甲">蒜蓉花甲</div>
+            <div class="food-item" data-type="sea" data-name="白灼虾">白灼虾</div>
+            <div class="food-item" data-type="sea" data-name="辣炒蛏子">辣炒蛏子</div>
+            <div class="food-item" data-type="sea" data-name="辣炒圣子">辣炒圣子</div>
+            <div class="food-item" data-type="sea" data-name="椒盐皮皮虾">椒盐皮皮虾</div>
+            <div class="food-item" data-type="sea" data-name="三文鱼刺身">三文鱼刺身</div>
+        </div>
+    </div>
+
+    <!--汤类-->
+    <div class="category-block">
+        <div class="category-title">🍲汤类</div>
+        <div class="food-list">
+            <div class="food-item" data-type="soup" data-name="玉米排骨汤">玉米排骨汤</div>
+            <div class="food-item" data-type="soup" data-name="紫菜蛋花汤">紫菜蛋花汤</div>
+            <div class="food-item" data-type="soup" data-name="鸽子汤">鸽子汤</div>
+            <div class="food-item" data-type="soup" data-name="番茄菌菇豆腐汤">番茄菌菇豆腐汤</div>
+            <div class="food-item" data-type="soup" data-name="红菇鸡汤">红菇鸡汤</div>
+            <div class="food-item" data-type="soup" data-name="海带筒骨汤">海带筒骨汤</div>
+            <div class="food-item" data-type="soup" data-name="菌菇肉片汤">菌菇肉片汤</div>
+            <div class="food-item" data-type="soup" data-name="羊肉汤">羊肉汤</div>
+        </div>
+    </div>
+
+    <!--主食-->
+    <div class="category-block">
+        <div class="category-title="🍚主食">🍚主食</div>
+        <div class="food-list">
+            <div class="food-item" data-type="food" data-name="炒饭">炒饭</div>
+            <div class="food-item" data-type="food" data-name="红烧牛肉面">红烧牛肉面</div>
+            <div class="food-item" data-type="food" data-name="炸酱面">炸酱面</div>
+            <div class="food-item" data-type="food" data-name="水饺">水饺</div>
+        </div>
+    </div>
+
+    <div class="btn-area">
+        <button id="genResult">生成点菜单</button>
+        <button id="saveImg">保存为图片</button>
+        <button id="resetBtn">清空选择</button>
+    </div>
+
+    <!--截图导出区域-->
+    <div id="resultWrap">
+        <h3>✨今日点菜清单</h3>
+        <div class="result-section">
+            <h4>🥩肉类</h4>
+            <div id="res-meat" class="empty-tip">暂未选择</div>
+        </div>
+        <div class="result-section">
+            <h4>🥬青菜</h4>
+            <div id="res-veg" class="empty-tip">暂未选择</div>
+        </div>
+        <div class="result-section">
+            <h4>🦞海鲜</h4>
+            <div id="res-sea" class="empty-tip">暂未选择</div>
+        </div>
+        <div class="result-section">
+            <h4>🍲汤类</h4>
+            <div id="res-soup" class="empty-tip">暂未选择</div>
+        </div>
+        <div class="result-section">
+            <h4>🍚主食</h4>
+            <div id="res-food" class="empty-tip">暂未选择</div>
+        </div>
+    </div>
+
+<script>
+//菜品点击
+const foodItems = document.querySelectorAll('.food-item');
+foodItems.forEach(el=>{
+    el.addEventListener('click',()=>{
+        el.classList.toggle('active');
+    })
+})
+
+//生成结果
+document.getElementById('genResult').addEventListener('click',()=>{
+    const meatSel = [];
+    const vegSel = [];
+    const seaSel = [];
+    const soupSel = [];
+    const foodSel = [];
+    document.querySelectorAll('.food-item.active').forEach(item=>{
+        const t = item.dataset.type;
+        const n = item.dataset.name;
+        if(t==='meat') meatSel.push(n);
+        if(t==='veg') vegSel.push(n);
+        if(t==='sea') seaSel.push(n);
+        if(t==='soup') soupSel.push(n);
+        if(t==='food') foodSel.push(n);
+    })
+    document.getElementById('res-meat').innerText = meatSel.length>0 ? meatSel.join('、') : '暂未选择';
+    document.getElementById('res-veg').innerText = vegSel.length>0 ? vegSel.join('、') : '暂未选择';
+    document.getElementById('res-sea').innerText = seaSel.length>0 ? seaSel.join('、') : '暂未选择';
+    document.getElementById('res-soup').innerText = soupSel.length>0 ? soupSel.join('、') : '暂未选择';
+    document.getElementById('res-food').innerText = foodSel.length>0 ? foodSel.join('、') : '暂未选择';
+})
+
+//保存图片
+document.getElementById('saveImg').addEventListener('click',async ()=>{
+    const targetDom = document.getElementById('resultWrap');
+    const canvas = await html2canvas(targetDom,{scale:2});
+    const link = document.createElement('a');
+    link.download = "情侣点菜单.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+})
+
+//清空
+document.getElementById('resetBtn').addEventListener('click',()=>{
+    document.querySelectorAll('.food-item.active').forEach(i=>i.classList.remove('active'));
+    document.getElementById('res-meat').innerText='暂未选择';
+    document.getElementById('res-veg').innerText='暂未选择';
+    document.getElementById('res-sea').innerText='暂未选择';
+    document.getElementById('res-soup').innerText='暂未选择';
+    document.getElementById('res-food').innerText='暂未选择';
+})
+</script>
+</body>
+</html>
