@@ -174,6 +174,7 @@
 
 <div class="tools" id="tools">
   <button id="btnRotate" type="button">自动环绕</button>
+  <button id="btnGirl" type="button">走到门前</button>
   <button id="btnReset" type="button">重置视角</button>
 </div>
 
@@ -194,8 +195,8 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/jsm/"
   }
 }
 </script>
@@ -204,6 +205,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -321,11 +323,28 @@ const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerH
 
 const camEndDesktop  = new THREE.Vector3(13.4, 6.2, 18.2);
 const camEndMobile   = new THREE.Vector3(15.6, 7.4, 21.6);
-const camEnd   = isMobile ? camEndMobile : camEndDesktop;
+
+/* 机位预设：默认远景，?view=girl 直接站到门前看她 */
+const VIEWS = {
+  hero: null,
+  girl: { pos: [3.30, 1.62, 7.60], target: [0.62, 1.10, 3.30] },
+  side: { pos: [-14.6, 5.7, 14.4], target: [0, 2.4, 0] }
+};
+const viewKey = (new URLSearchParams(location.search).get('view') || 'hero').toLowerCase();
+const camPreset = VIEWS[viewKey];
+
+/* 近景机位放开俯仰与距离限制，远景仍保持原来的安全范围 */
+let closeView = !!camPreset;
+
+const camEnd = camPreset
+  ? new THREE.Vector3(...camPreset.pos)
+  : (isMobile ? camEndMobile : camEndDesktop);
 const camStart = camEnd.clone().multiplyScalar(2.05).setY(camEnd.y * 2.15);
 camera.position.copy(SKIP_INTRO ? camEnd : camStart);
 
-const TARGET = new THREE.Vector3(0, 2.55, 0);
+const TARGET = camPreset
+  ? new THREE.Vector3(...camPreset.target)
+  : new THREE.Vector3(0, 2.55, 0);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.copy(TARGET);
@@ -334,7 +353,7 @@ controls.dampingFactor = 0.055;
 controls.enablePan = false;
 controls.rotateSpeed = 0.62;
 controls.zoomSpeed = 0.72;
-controls.minDistance = 7.5;
+controls.minDistance = closeView ? 3.2 : 7.5;
 controls.maxDistance = 34;
 controls.minPolarAngle = 0.34;
 controls.maxPolarAngle = Math.PI * 0.494;
@@ -2012,6 +2031,7 @@ buildComposer();
    ========================================================= */
 const btnRotate = document.getElementById('btnRotate');
 const btnReset = document.getElementById('btnReset');
+const btnGirl = document.getElementById('btnGirl');
 const hudEl = document.getElementById('hud');
 const hintEl = document.getElementById('hint');
 const toolsEl = document.getElementById('tools');
@@ -2029,6 +2049,23 @@ function flyTo(pos, target, dur = 1.5) {
   };
 }
 
+/* 近景机位放开距离下限，远景恢复原限制 */
+function setCloseView(on) {
+  closeView = on;
+  controls.minDistance = on ? 3.2 : 7.5;
+}
+
+const GIRL_VIEW_POS = new THREE.Vector3(...VIEWS.girl.pos);
+const GIRL_VIEW_TARGET = new THREE.Vector3(...VIEWS.girl.target);
+
+btnGirl.addEventListener('click', () => {
+  controls.autoRotate = false;
+  btnRotate.classList.remove('on');
+  setCloseView(true);
+  flyTo(GIRL_VIEW_POS, GIRL_VIEW_TARGET, 1.9);
+  btnGirl.blur();
+});
+
 btnRotate.addEventListener('click', () => {
   controls.autoRotate = !controls.autoRotate;
   btnRotate.classList.toggle('on', controls.autoRotate);
@@ -2038,6 +2075,7 @@ btnRotate.addEventListener('click', () => {
 btnReset.addEventListener('click', () => {
   controls.autoRotate = false;
   btnRotate.classList.remove('on');
+  setCloseView(false);
   flyTo(camEnd, TARGET, 1.6);
   btnReset.blur();
 });
@@ -2045,6 +2083,7 @@ btnReset.addEventListener('click', () => {
 renderer.domElement.addEventListener('dblclick', () => {
   controls.autoRotate = false;
   btnRotate.classList.remove('on');
+  setCloseView(false);
   flyTo(camEnd, TARGET, 1.3);
 });
 
@@ -2110,6 +2149,61 @@ function resolveCameraCollision() {
 }
 
 /* =========================================================
+   14.5 门前的小女孩（外部 GLB）
+   ========================================================= */
+const GIRL = {
+  url: './girl_web.glb',
+  /* 门廊地台上、门左前方一步：地台面 y=0.54，门在 z=2.32 */
+  pos: new THREE.Vector3(0.62, 0.54, 3.30),
+  faceY: 0.12,          // 面向 +Z（屋外），略侧一点更自然
+  scale: 1.0
+};
+let girlRoot = null;
+let girlBaseY = GIRL.pos.y;
+
+function loadGirl() {
+  return new Promise((resolve) => {
+    new GLTFLoader().load(GIRL.url, (gltf) => {
+      const root = gltf.scene;
+      root.scale.setScalar(GIRL.scale);
+      root.rotation.y = GIRL.faceY;
+
+      root.traverse((o) => {
+        if (!o.isMesh) return;
+        o.castShadow = true;
+        o.receiveShadow = true;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m) => {
+          if (!m) return;
+          if (m.map) m.map.anisotropy = 8;
+          m.envMapIntensity = 0.5;
+          m.metalness = 0;                        // 原始 MR 贴图偏“塑料”，在黄昏光下会反蓝
+          m.roughness = Math.min(1, (m.roughness ?? 1) * 1.15);
+          if ('specularIntensity' in m) m.specularIntensity = 0.45;  // 原模型 specular ×2，容易过曝
+          m.color.setRGB(0.70, 0.60, 0.48);       // 压亮 + 暖调，才和黄昏的木屋同一个色温
+          m.needsUpdate = true;
+        });
+      });
+
+      /* 贴地：以包围盒最低点对齐地台面 */
+      root.position.set(GIRL.pos.x, 0, GIRL.pos.z);
+      root.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(root);
+      girlBaseY = GIRL.pos.y - bb.min.y + 0.004;
+      root.position.y = girlBaseY;
+
+      scene.add(root);
+      girlRoot = root;
+      resolve(root);
+    }, undefined, (e) => {
+      console.warn('[girl] 人物模型加载失败：', e);
+      if (hintEl) hintEl.textContent = '人物需本地服务器打开（双击 index.html 读不到 .glb）';
+      resolve(null);
+    });
+  });
+}
+
+/* =========================================================
    15. 构建完成 → 渲染循环
    ========================================================= */
 const clock = new THREE.Clock();
@@ -2155,9 +2249,9 @@ function animate() {
   }
 
   /* 防止相机钻入地面 */
-  const minY = groundHeight(camera.position.x, camera.position.z) + 1.35;
+  const minY = groundHeight(camera.position.x, camera.position.z) + (closeView ? 0.9 : 1.35);
   if (camera.position.y < minY) camera.position.y = minY;
-  if (camera.position.y < 2.2 && camera.position.distanceTo(controls.target) < 12) {
+  if (!closeView && camera.position.y < 2.2 && camera.position.distanceTo(controls.target) < 12) {
     camera.position.y = 2.2;
   }
 
@@ -2170,6 +2264,13 @@ function animate() {
 
   updateSmoke(dt, time);
   updateFireflies(time);
+
+  /* 小女孩：无骨骼，用整体微幅摆动模拟“站着呼吸” */
+  if (girlRoot) {
+    girlRoot.rotation.y = GIRL.faceY + Math.sin(time * 0.27) * 0.055 + Math.sin(time * 0.11) * 0.03;
+    girlRoot.rotation.z = Math.sin(time * 0.41) * 0.005;
+    girlRoot.position.y = girlBaseY + Math.sin(time * 1.15) * 0.0035;
+  }
 
   for (let i = 0; i < mists.length; i++) {
     const sp = mists[i];
@@ -2208,6 +2309,9 @@ function animate() {
   try {
     await nextFrame();
     setProgress(94);
+    // 人物要在首帧之前进场景，否则冻结的阴影贴图里没有她
+    await loadGirl();
+    await nextFrame();
     // 预编译，避免首帧卡顿
     try { renderer.compile(scene, camera); } catch (e) { /* ignore */ }
     await nextFrame();
